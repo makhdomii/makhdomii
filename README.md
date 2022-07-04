@@ -16,8 +16,7 @@ Here are some ideas to get you started:
 -->
 
 
-[![Makhdomii's GitHub stats](https://github-readme-stats.vercel.app/api?username=makhdomii&show_icons=true&theme=radical&count_private=true&include_all_commits=true)]
+![Makhdomii's GitHub stats](https://github-readme-stats.vercel.app/api?username=makhdomii&show_icons=true&theme=radical&count_private=true&include_all_commits=true)
 
-![My Stack Overflow Stats](https://so-stats-kurt-liao.vercel.app/api?user=11544999&hide=border&theme=radical)
 
-[solarized-light]: https://stackoverflow-card.vercel.app/?userID=11544999&theme=solarized-light
+![My Stack Overflow Stats](https://stackoverflow-card.vercel.app/?userID=11544999&theme=dracula)
