@@ -20,3 +20,5 @@ Here are some ideas to get you started:
 
 
 ![My Stack Overflow Stats](https://stackoverflow-card.vercel.app/?userID=11544999&theme=dracula)
+
+![](https://github-readme-stats.vercel.app/api/top-langs?username=makhdomii&theme=radical&langs_count=10&layout=compact)
