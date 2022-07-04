@@ -20,3 +20,4 @@ Here are some ideas to get you started:
 
 ![My Stack Overflow Stats](https://so-stats-kurt-liao.vercel.app/api?user=11544999&hide=border&theme=radical)
 
+[solarized-light]: https://stackoverflow-card.vercel.app/?userID=11544999&theme=solarized-light
