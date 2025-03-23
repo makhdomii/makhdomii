@@ -15,9 +15,9 @@ Here are some ideas to get you started:
 - ⚡ Fun fact: ...
 -->
 
-
+<!--
 ![Makhdomii's GitHub stats](https://github-readme-stats.vercel.app/api?username=makhdomii&show_icons=true&theme=radical&count_private=true&include_all_commits=true)
-
+-->
 [![profile for reza makhdomi on Stack Exchange, a network of free, community-driven Q&A sites](https://stackexchange.com/users/flair/15997402.png "profile for reza makhdomi on Stack Exchange, a network of free, community-driven Q&A sites")](https://stackexchange.com/users/15997402)
 
 ![My Stack Overflow Stats](https://stackoverflow-card.vercel.app/?userID=11544999&theme=solarized-light)
