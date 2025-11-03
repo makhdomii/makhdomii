@@ -49,10 +49,14 @@ else
 fi
 
 # --- Step 6: Optional emergency mode ---
-read -p "❓ Do you want to disable stop-writes-on-bgsave-error temporarily? (y/n): " answer
-if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
-  redis-cli config set stop-writes-on-bgsave-error no
-  echo "✅ stop-writes-on-bgsave-error set to no temporarily."
+if [ -t 0 ]; then
+  read -p "❓ Do you want to disable stop-writes-on-bgsave-error temporarily? (y/n): " answer
+  if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
+    redis-cli config set stop-writes-on-bgsave-error no
+    echo "✅ stop-writes-on-bgsave-error set to no temporarily."
+  fi
+else
+  echo "⚠️  Running in non-interactive mode. Skipping emergency mode prompt."
 fi
 
 echo "🎉 Cleanup and Redis restart complete!"
