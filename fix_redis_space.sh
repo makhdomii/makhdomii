@@ -17,15 +17,34 @@ sudo pkill -9 redis-server || true
 echo "🧹 Cleaning up disk space..."
 sudo apt clean -y
 sudo apt autoremove -y
-sudo journalctl --vacuum-time=3d || true
+sudo journalctl --vacuum-size=200M || true
 
-# Truncate large log files safely
-for log_file in /var/log/syslog /var/log/auth.log /var/log/redis/redis-server.log; do
-  if [ -f "$log_file" ]; then
-    sudo truncate -s 0 "$log_file"
-    echo "✅ Truncated $log_file"
-  fi
-done
+# Truncate large log files safely (including rotated variants)
+echo "🧾 Checking oversized system logs..."
+log_found=false
+while IFS= read -r -d '' log_file; do
+  log_found=true
+  sudo truncate -s 0 "$log_file"
+  echo "✅ Truncated $log_file"
+done < <(sudo find /var/log -maxdepth 1 -type f \( \
+    -name 'syslog' -o -name 'syslog.*' -o \
+    -name 'auth.log' -o -name 'auth.log.*' -o \
+    -name 'kern.log' -o -name 'kern.log.*' -o \
+    -name 'daemon.log' -o -name 'daemon.log.*' -o \
+    -name 'messages' -o -name 'messages.*' -o \
+    -name 'btmp' -o -name 'btmp.*' -o \
+    -name 'wtmp' -o -name 'wtmp.*' -o \
+    -name 'redis-server.log' -o -name 'redis-server.log.*' \
+  \) -size +100M -print0)
+
+if [ "$log_found" = false ]; then
+  echo "ℹ️ No oversized system logs found ( > 100MB )."
+fi
+
+if [ -f /var/log/redis/redis-server.log ]; then
+  sudo truncate -s 0 /var/log/redis/redis-server.log
+  echo "✅ Truncated /var/log/redis/redis-server.log"
+fi
 
 # Show free space
 echo "📊 Disk usage after cleanup:"
@@ -50,11 +69,11 @@ fi
 
 # --- Step 6: Optional emergency mode ---
 if [ -t 0 ]; then
-  read -p "❓ Do you want to disable stop-writes-on-bgsave-error temporarily? (y/n): " answer
-  if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
+  # read -p "❓ Do you want to disable stop-writes-on-bgsave-error temporarily? (y/n): " answer
+  # if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
     redis-cli config set stop-writes-on-bgsave-error no
     echo "✅ stop-writes-on-bgsave-error set to no temporarily."
-  fi
+  # fi
 else
   echo "⚠️  Running in non-interactive mode. Skipping emergency mode prompt."
 fi
