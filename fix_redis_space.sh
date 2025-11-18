@@ -1,81 +1,58 @@
 #!/usr/bin/env bash
 # ================================================================
-# Fix Redis "No space left on device" error automatically
+# Restore Redis to default configuration
+# Reverses changes made by fix_redis_space.sh
 # Author: Reza automation version
 # ================================================================
 
 set -e
 
-echo "🚀 Starting Redis cleanup and recovery process..."
+echo "🔄 Starting Redis default configuration restoration..."
 
 # --- Step 1: Stop Redis if it's running ---
 echo "🛑 Stopping Redis service..."
 sudo systemctl stop redis || true
 sudo pkill -9 redis-server || true
 
-# --- Step 2: Clean up disk space ---
-echo "🧹 Cleaning up disk space..."
-sudo apt clean -y
-sudo apt autoremove -y
-sudo journalctl --vacuum-size=200M || true
-
-# Truncate large log files safely (including rotated variants)
-echo "🧾 Checking oversized system logs..."
-log_found=false
-while IFS= read -r -d '' log_file; do
-  log_found=true
-  sudo truncate -s 0 "$log_file"
-  echo "✅ Truncated $log_file"
-done < <(sudo find /var/log -maxdepth 1 -type f \( \
-    -name 'syslog' -o -name 'syslog.*' -o \
-    -name 'auth.log' -o -name 'auth.log.*' -o \
-    -name 'kern.log' -o -name 'kern.log.*' -o \
-    -name 'daemon.log' -o -name 'daemon.log.*' -o \
-    -name 'messages' -o -name 'messages.*' -o \
-    -name 'btmp' -o -name 'btmp.*' -o \
-    -name 'wtmp' -o -name 'wtmp.*' -o \
-    -name 'redis-server.log' -o -name 'redis-server.log.*' \
-  \) -size +100M -print0)
-
-if [ "$log_found" = false ]; then
-  echo "ℹ️ No oversized system logs found ( > 100MB )."
+# --- Step 2: Restore Redis persistence (uncomment save directives) ---
+echo "⚙️ Restoring Redis persistence to default..."
+if [ -f /etc/redis/redis.conf ]; then
+  # Uncomment save directives that were commented out
+  sudo sed -i 's/^# save /save /' /etc/redis/redis.conf
+  echo "✅ Restored save directives in redis.conf"
+else
+  echo "⚠️  /etc/redis/redis.conf not found. Skipping config restoration."
 fi
 
-if [ -f /var/log/redis/redis-server.log ]; then
-  sudo truncate -s 0 /var/log/redis/redis-server.log
-  echo "✅ Truncated /var/log/redis/redis-server.log"
-fi
-
-# Show free space
-echo "📊 Disk usage after cleanup:"
-df -h /
-
-# --- Step 3: Disable Redis snapshot saving temporarily ---
-echo "⚙️ Disabling Redis persistence temporarily..."
-sudo sed -i 's/^save/# save/' /etc/redis/redis.conf
-
-# --- Step 4: Start Redis again ---
+# --- Step 3: Start Redis again ---
 echo "▶️ Starting Redis..."
 sudo systemctl start redis
 
-# --- Step 5: Check Redis status ---
+# --- Step 4: Check Redis status ---
 echo "🔍 Checking Redis status..."
 sleep 2
 if redis-cli ping | grep -q "PONG"; then
   echo "✅ Redis is running successfully!"
 else
   echo "❌ Redis did not respond to ping. Check logs manually."
+  exit 1
 fi
 
-# --- Step 6: Optional emergency mode ---
-if [ -t 0 ]; then
-  # read -p "❓ Do you want to disable stop-writes-on-bgsave-error temporarily? (y/n): " answer
-  # if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
-    redis-cli config set stop-writes-on-bgsave-error no
-    echo "✅ stop-writes-on-bgsave-error set to no temporarily."
-  # fi
+# --- Step 5: Restore stop-writes-on-bgsave-error to default (yes) ---
+echo "⚙️ Restoring stop-writes-on-bgsave-error to default (yes)..."
+if redis-cli config set stop-writes-on-bgsave-error yes 2>/dev/null; then
+  echo "✅ stop-writes-on-bgsave-error restored to yes (default)."
 else
-  echo "⚠️  Running in non-interactive mode. Skipping emergency mode prompt."
+  echo "⚠️  Could not set stop-writes-on-bgsave-error. Redis may not be running or config may already be set."
 fi
 
-echo "🎉 Cleanup and Redis restart complete!"
+# --- Step 6: Verify configuration ---
+echo "🔍 Verifying Redis configuration..."
+echo "📋 Current save directives:"
+grep "^save " /etc/redis/redis.conf || echo "⚠️  No active save directives found in config"
+
+echo "📋 Current stop-writes-on-bgsave-error setting:"
+redis-cli config get stop-writes-on-bgsave-error || echo "⚠️  Could not retrieve setting"
+
+echo "🎉 Redis default configuration restoration complete!"
+
